@@ -1,0 +1,10 @@
+<form method="POST">
+    {% csrf_token %}
+    <textarea name="text" placeholder="Enter text for sentiment analysis" required></textarea>
+    <button type="submit">Analyze Sentiment</button>
+</form>
+
+{% if sentiment %}
+    <h3>Sentiment Analysis Result:</h3>
+    <p>The sentiment of the text is: <strong>{{ sentiment }}</strong></p>
+{% endif %}

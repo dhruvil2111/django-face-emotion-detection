@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time Emotion Detection</title>
+    <style>
+        video, img {
+            width: 640px;
+            height: 480px;
+            border: 1px solid black;
+        }
+        canvas {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Real-time Emotion Detection</h1>
+
+    <!-- Video stream from the webcam -->
+    <div>
+        <video id="video" autoplay playsinline></video>
+        <button id="capture">Capture</button>
+        <canvas id="canvas"></canvas>
+        <img id="snapshot" src="#" alt="Snapshot">
+    </div>
+
+    <!-- Chart.js to display emotions -->
+    <canvas id="emotionChart"></canvas>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const context = canvas.getContext('2d');
+        const snapshot = document.getElementById('snapshot');
+        const captureButton = document.getElementById('capture');
+        const emotionChartCanvas = document.getElementById('emotionChart');
+        let emotionData = {};
+
+        // Start video stream
+        function startVideo() {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(stream => {
+                    video.srcObject = stream;
+                })
+                .catch(err => {
+                    console.error("Error accessing camera: " + err);
+                    alert("Camera permission is required.");
+                });
+        }
+
+        // Capture an image from the video stream
+        captureButton.addEventListener('click', function () {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const dataUrl = canvas.toDataURL('image/jpeg');
+            snapshot.src = dataUrl;
+
+            // Send the image to the server
+            uploadImage(dataUrl);
+        });
+
+        // Function to send the captured image to the server
+        function uploadImage(dataUrl) {
+            fetch("{% url 'emotion_detection' %}", {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ image: dataUrl })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Update chart with emotion data
+                updateEmotionChart(data);
+            })
+            .catch(err => console.error('Error uploading image:', err));
+        }
+
+        // Function to update the chart with the emotion data
+        function updateEmotionChart(emotions) {
+            emotionData = {
+                happy: emotions.happy || 0,
+                sad: emotions.sad || 0,
+                angry: emotions.angry || 0,
+                surprised: emotions.surprised || 0,
+                neutral: emotions.neutral || 0
+            };
+
+            emotionChart.update();
+        }
+
+        // Initialize the video stream
+        startVideo();
+
+        // Initialize Chart.js for emotion data visualization
+        const emotionChart = new Chart(emotionChartCanvas, {
+            type: 'bar',
+            data: {
+                labels: ['Happy', 'Sad', 'Angry', 'Surprised', 'Neutral'],
+                datasets: [{
+                    label: 'Emotion Level (%)',
+                    data: [0, 0, 0, 0, 0],
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.2)',
+                        'rgba(54, 162, 235, 0.2)',
+                        'rgba(255, 206, 86, 0.2)',
+                        'rgba(75, 192, 192, 0.2)',
+                        'rgba(153, 102, 255, 0.2)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(153, 102, 255, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

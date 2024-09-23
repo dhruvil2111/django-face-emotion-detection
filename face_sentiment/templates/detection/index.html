@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time Multi-face Emotion Detection</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .container {
+            display: flex;
+            justify-content: space-around;
+            width: 80%;
+            margin-top: 20px;
+        }
+        video, img {
+            width: 640px;
+            height: 480px;
+            border: 2px solid #333;
+        }
+        canvas {
+            width: 400px !important;
+            height: 400px !important;
+        }
+        h1, h3 {
+            color: #333;
+        }
+        .stats {
+            margin-top: 20px;
+            text-align: center;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h1>Real-time Multi-face Emotion Detection</h1>
+
+    <div class="container">
+        <div class="stats">
+            <h3>Total Faces Detected: <span id="total-faces"></span></h3>
+            <h3>Most Frequent Emotion: <span id="most-frequent-emotion"></span></h3>
+            <h3>Emotion Breakdown (Percentage):</h3>
+            <ul id="emotion-percentages"></ul>
+        </div>
+        <!-- Video stream from the webcam -->
+        <div>
+            <img src="{% url 'video_feed' %}" alt="Video stream" id="video">
+        </div>
+
+        <!-- Emotion chart for multiple faces -->
+        <div id="emotionCharts">
+            <!-- Chart container for each face -->
+        </div>
+    </div>
+
+    <script>
+        // Create an object to store charts for each face
+        let faceCharts = {};
+
+        // Function to update emotion data for each face
+        function updateEmotionCharts() {
+            fetch("{% url 'emotion_data' %}")
+                .then(response => response.json())
+                .then(data => {
+                    const faces = data.faces;
+                    const totalFaces = data.total_faces;
+                    const mostFrequentEmotion = data.most_frequent_emotion;
+                    const emotionPercentages = data.emotion_percentages;
+
+                    // Update face count and most frequent emotion
+                    document.getElementById('total-faces').innerText = totalFaces;
+                    document.getElementById('most-frequent-emotion').innerText = mostFrequentEmotion || 'N/A';
+
+                    // Update emotion percentages
+                    const percentagesList = document.getElementById('emotion-percentages');
+                    percentagesList.innerHTML = '';  // Clear previous data
+                    for (const emotion in emotionPercentages) {
+                        const li = document.createElement('li');
+                        li.innerText = `${emotion}: ${emotionPercentages[emotion].toFixed(2)}%`;
+                        percentagesList.appendChild(li);
+                    }
+
+                    // Clear previous charts if face count has changed
+                    if (Object.keys(faceCharts).length !== faces.length) {
+                        document.getElementById('emotionCharts').innerHTML = '';
+                        faceCharts = {};
+                    }
+
+                    faces.forEach((face, index) => {
+                        const faceId = `face-${index}`;
+
+                        // Create chart if it doesn't exist for this face
+                        if (!faceCharts[faceId]) {
+                            const chartContainer = document.createElement('canvas');
+                            chartContainer.id = faceId;
+                            chartContainer.style.width = "400px";
+                            chartContainer.style.height = "400px";
+                            document.getElementById('emotionCharts').appendChild(chartContainer);
+
+                            const ctx = chartContainer.getContext('2d');
+                            faceCharts[faceId] = new Chart(ctx, {
+                                type: 'bar',
+                                data: {
+                                    labels: ['Angry', 'Disgust', 'Fear', 'Happy', 'Sad', 'Surprise', 'Neutral'],
+                                    datasets: [{
+                                        label: `Face ${index + 1} Emotions`,
+                                        data: [0, 0, 0, 0, 0, 0, 0],
+                                        backgroundColor: [
+                                            'rgba(255, 99, 132, 0.2)',
+                                            'rgba(54, 162, 235, 0.2)',
+                                            'rgba(255, 206, 86, 0.2)',
+                                            'rgba(75, 192, 192, 0.2)',
+                                            'rgba(153, 102, 255, 0.2)',
+                                            'rgba(255, 159, 64, 0.2)',
+                                            'rgba(201, 203, 207, 0.2)'
+                                        ],
+                                        borderColor: [
+                                            'rgba(255, 99, 132, 1)',
+                                            'rgba(54, 162, 235, 1)',
+                                            'rgba(255, 206, 86, 1)',
+                                            'rgba(75, 192, 192, 1)',
+                                            'rgba(153, 102, 255, 1)',
+                                            'rgba(255, 159, 64, 1)',
+                                            'rgba(201, 203, 207, 1)'
+                                        ],
+                                        borderWidth: 1
+                                    }]
+                                },
+                                options: {
+                                    scales: {
+                                        y: {
+                                            beginAtZero: true
+                                        }
+                                    }
+                                }
+                            });
+                        }
+
+                        // Update chart data
+                        faceCharts[faceId].data.datasets[0].data = [
+                            face.emotions.angry,
+                            face.emotions.disgust,
+                            face.emotions.fear,
+                            face.emotions.happy,
+                            face.emotions.sad,
+                            face.emotions.surprise,
+                            face.emotions.neutral
+                        ];
+                        faceCharts[faceId].update();
+                    });
+                });
+        }
+
+        // Update the charts and stats every second
+        setInterval(updateEmotionCharts, 1000);
+    </script>
+</body>
+</html>
