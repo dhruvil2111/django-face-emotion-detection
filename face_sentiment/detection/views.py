@@ -14,6 +14,9 @@ emotion_data = {
     "emotion_timeline": []  # Stores the dominant emotion over time
 }
 
+MIN_FACE_SIZE = 100  # Minimum width/height for a face to be considered valid
+
+
 # Real-time face and emotion detection using OpenCV and DeepFace
 def face_emotion_detection(camera):
     global emotion_data
@@ -42,6 +45,8 @@ def face_emotion_detection(camera):
 
         # If faces are detected, perform emotion analysis for each face
         for face_index, (x, y, w, h) in enumerate(faces, start=1):
+            if w < MIN_FACE_SIZE or h < MIN_FACE_SIZE:
+                continue  # Skip faces that are too small
             # Crop the face region from the frame
             face_frame = frame[y : y + h, x : x + w]
 
