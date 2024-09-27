@@ -4,6 +4,7 @@ from deepface import DeepFace
 from django.shortcuts import render
 import numpy as np
 from collections import Counter
+from django.contrib.auth.decorators import login_required
 
 # Store emotions and stats for multiple faces
 emotion_data = {
@@ -135,6 +136,7 @@ def face_emotion_detection(camera):
 
 
 # Streaming video feed with emotion detection
+@login_required
 def video_feed(request):
     return StreamingHttpResponse(
         face_emotion_detection(cv2.VideoCapture(0)),
@@ -143,10 +145,12 @@ def video_feed(request):
 
 
 # Return emotion data for all faces as JSON
+@login_required
 def get_emotion_data(request):
     return JsonResponse(emotion_data)
 
 
 # Index view for rendering the template
+@login_required
 def index(request):
     return render(request, "detection/index.html")

@@ -20,4 +20,6 @@ from django.urls import include, path
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("detection/", include("detection.urls")),
+    path("", include("django.contrib.auth.urls")),  # For login/logout
+    path("", include("users.urls")),  # Redirect root to users
 ]
