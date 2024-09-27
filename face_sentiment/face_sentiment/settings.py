@@ -125,7 +125,7 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 LOGIN_URL = (
-    "/users/login/"  # Redirect to your custom login page if the user isn't logged in
+    "/login/"  # Redirect to your custom login page if the user isn't logged in
 )
 LOGIN_REDIRECT_URL = "/detection/"  # Redirect to home after a successful login
-LOGOUT_REDIRECT_URL = "/users/login/"  # Redirect to login after logout
+LOGOUT_REDIRECT_URL = "/login/"  # Redirect to login after logout

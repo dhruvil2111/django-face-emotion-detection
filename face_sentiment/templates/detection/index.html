@@ -41,7 +41,11 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <a href="{% url 'logout' %}"><button>Logout</button></a>
+    <form method="POST" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button type="submit">Logout</button>
+    </form>
+
     <h1>Real-time Multi-face Emotion Detection</h1>
 
     <div class="container">
